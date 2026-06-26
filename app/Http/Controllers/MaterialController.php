@@ -11,6 +11,17 @@ use Illuminate\Validation\Rule;
 class MaterialController extends Controller
 {
     /**
+     * Obtener la lista de materiales y las categorías asociadas a éstos.
+     * GET /api/materiales
+     */
+    public function index(): JsonResponse
+    {
+        $materiales = Material::with('categoria')->get();
+
+        return response()->json($materiales);
+    }
+
+    /**
      * Insertar un material con su categoría asociada.
      * Se acepta una categoría existente (categoria_id) o el nombre de una
      * categoría nueva (categoria), que se crea si no existe.
