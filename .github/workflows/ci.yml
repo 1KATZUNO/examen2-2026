@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: Pruebas (php artisan test)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: testing
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_mysql, bcmath, ctype, fileinfo, openssl, tokenizer
+          coverage: none
+
+      - name: Copiar archivo de entorno
+        run: cp .env.example .env
+
+      - name: Instalar dependencias de Composer
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generar la llave de la aplicación
+        run: php artisan key:generate
+
+      - name: Ejecutar las migraciones
+        run: php artisan migrate --force
+
+      - name: Ejecutar las pruebas
+        run: php artisan test
