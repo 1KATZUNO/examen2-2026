@@ -6,6 +6,7 @@ use App\Models\Categoria;
 use App\Models\Material;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MaterialController extends Controller
 {
@@ -38,5 +39,24 @@ class MaterialController extends Controller
         ]);
 
         return response()->json($material->load('categoria'), 201);
+    }
+
+    /**
+     * Actualizar un material.
+     * PUT/PATCH /api/materiales/{material}
+     */
+    public function update(Request $request, Material $material): JsonResponse
+    {
+        $validated = $request->validate([
+            'codigo' => ['sometimes', 'integer', Rule::unique('materiales', 'codigo')->ignore($material->id)],
+            'unidad_medida' => ['sometimes', 'string', 'max:255'],
+            'descripcion' => ['sometimes', 'string', 'max:255'],
+            'ubicacion' => ['sometimes', 'string', 'max:255'],
+            'categoria_id' => ['sometimes', 'integer', 'exists:categorias,id'],
+        ]);
+
+        $material->update($validated);
+
+        return response()->json($material->load('categoria'));
     }
 }
